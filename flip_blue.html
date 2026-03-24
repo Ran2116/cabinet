@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cabinet</title>
+  <style>
+    @font-face {
+      font-family: 'MyFont';
+      src: url('Typewriter-Serial Regular.ttf');
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #ffffff;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'MyFont';
+    }
+
+    #fence {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+      pointer-events: none;
+      opacity: 0.3;
+      z-index: 1;
+    }
+
+    #noise {
+      position: fixed;
+      inset: 0;
+      background-image: url('noise.gif');
+      background-repeat: repeat;
+      background-size: auto;
+      opacity: 0.2;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, 11.7vw);
+      grid-template-rows: repeat(3, auto);
+      gap: 2vw;
+      z-index:3
+    }
+
+    .cab {
+      width: 11.7vw;
+      aspect-ratio: 90 / 130;
+      position: relative;
+      overflow: hidden;
+      cursor: default;
+      z-index:3
+    }
+
+    .cab .img-layer {
+      position: absolute;
+      inset: 0;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      opacity: 1;
+      transition: opacity 0.2s ease;
+      z-index:3
+    }
+
+    .cab .txt-layer {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(10px, 1.1vw, 16px);
+      font-weight: bold;
+      letter-spacing: 0.04em;
+      color: #000000;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      user-select: none;
+      z-index:3
+    }
+
+    .cab:hover .img-layer { opacity: 0; }
+    .cab:hover .txt-layer { opacity: 1; }
+
+    .cab.special { cursor: pointer; }
+    .cab.special .txt-layer { color: #F8E884; background-color: rgba(60, 55, 50, 0.62); }
+  </style>
+</head>
+<body>
+
+<img id="fence" src="fence2.png" alt="">
+<div id="noise"></div>
+
+<div class="grid" id="grid"></div>
+
+<script>
+  const TOTAL        = 12;
+  const SPECIAL_IDX  = 7;   
+  const RETURN_INDEX = 3;   // path index 2 = cell 7
+
+  const grid = document.getElementById('grid');
+
+  for (let i = 0; i < TOTAL; i++) {
+    const cab = document.createElement('div');
+    cab.className = i === SPECIAL_IDX ? 'cab special' : 'cab';
+    cab.innerHTML = `
+      <div class="img-layer" style="background-image:url('cabinet${i + 1}.png');"></div>
+      <div class="txt-layer">cabinet</div>
+    `;
+
+    if (i === SPECIAL_IDX) {
+      cab.addEventListener('click', () => {
+        sessionStorage.setItem('gotoPathIndex', String(RETURN_INDEX));
+        window.location.href = 'type_blue.html';
+      });
+    }
+
+    grid.appendChild(cab);
+  }
+</script>
+
+</body>
+</html>

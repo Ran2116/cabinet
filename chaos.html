@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cabinet</title>
+  <style>
+    @font-face {
+      font-family: 'MyFont';
+      src: url('Typewriter-Serial Regular.ttf');
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #ffffff;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      position: relative;
+      font-family: Arial, sans-serif;
+    }
+
+     #fence {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+      pointer-events: none;
+      opacity: 0.3;
+      z-index: 1;
+    }
+
+    #noise {
+      position: fixed;
+      inset: 0;
+      background-image: url('noise.gif');
+      background-repeat: repeat;
+      background-size: auto;
+      opacity: 0.2;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .word {
+      position: absolute;
+      white-space: nowrap;
+      user-select: none;
+      color: #000000;
+      pointer-events: none;
+      font-size: 20px;
+    }
+
+   
+    .word.special {
+      font-family: Arial, sans-serif;
+      font-size: 40px;
+      font-weight: 900;
+      color: #000000;
+      cursor: pointer;
+      pointer-events: auto;
+      transition: color 0.15s, font-family 0.15s;
+    }
+
+    .word.special:hover {
+      font-family: 'MyFont', monospace;
+      color: #F8E884;
+    }
+
+    .word.gone {
+      display: none;
+    }
+  </style>
+</head>
+
+<img id="fence" src="fence2.png" alt="">
+<div id="noise"></div>
+
+<body>
+
+<script>
+  const RETURN_INDEX = 1;  // path index 4 = cell 9
+
+
+  const TRANSLATIONS = [
+    '橱柜',          // Chinese
+    'キャビネット',   // Japanese
+    '캐비닛',        // Korean
+    'armoire',      // French
+    'Schrank',      // German
+    'armario',      // Spanish
+    'armadietto',   // Italian
+    'шкаф',         // Russian
+    'dolap',        // Turkish
+    'خزانة',        // Arabic
+    'ארון',          // Hebrew
+    'kabinet',      // Dutch
+    'skåp',         // Swedish
+    'kaappi',       // Finnish
+    'szekrény',     // Hungarian
+    'dulap',        // Romanian
+    'kast',         // Afrikaans
+    'almari',       // Malay
+    'Kabinett',     // German alt
+    'armário',      // Portuguese
+    'ντουλάπι',     // Greek
+    'kabine',       // Danish
+    'skap',         // Norwegian
+    'skříň',        // Czech
+    'szafka',       // Polish
+    'шафа',         // Ukrainian
+    'кабинет',      // Bulgarian
+    'kabinet',      // Indonesian
+    'tủ',           // Vietnamese
+  ];
+
+  const TOTAL_WORDS  = 180;
+  const SPECIAL_COUNT = 5;
+
+  let remaining = SPECIAL_COUNT;
+
+
+  function randBetween(a, b) { return a + Math.random() * (b - a); }
+
+
+  const positions = [];
+  for (let i = 0; i < TOTAL_WORDS; i++) {
+    positions.push({
+      left: randBetween(1, 88),
+      top:  randBetween(1, 90),
+      size: randBetween(0.8, 2.2),
+      rot:  randBetween(-25, 25),
+      opacity: randBetween(0.25, 0.85),
+    });
+  }
+
+
+  const specialIndices = new Set();
+  while (specialIndices.size < SPECIAL_COUNT) {
+    specialIndices.add(Math.floor(Math.random() * TOTAL_WORDS));
+  }
+
+
+  positions.forEach((pos, i) => {
+    const el = document.createElement('span');
+    el.className = specialIndices.has(i) ? 'word special' : 'word';
+
+    if (specialIndices.has(i)) {
+      el.textContent = 'cabinet';
+      el.style.opacity    = '1';
+    } else {
+      
+      const t = TRANSLATIONS[Math.floor(Math.random() * TRANSLATIONS.length)];
+      el.textContent    = t;
+      el.style.fontSize = `${pos.size}vw`;
+      el.style.opacity  = pos.opacity;
+    }
+
+    el.style.left      = `${pos.left}vw`;
+    el.style.top       = `${pos.top}vh`;
+    el.style.transform = `rotate(${pos.rot}deg)`;
+
+    if (specialIndices.has(i)) {
+      el.addEventListener('click', () => {
+        el.classList.add('gone');
+        remaining--;
+        if (remaining === 0) {
+          sessionStorage.setItem('gotoPathIndex', String(RETURN_INDEX));
+          window.location.href = 'spiral.html';
+        }
+      });
+    }
+
+    document.body.appendChild(el);
+  });
+</script>
+
+</body>
+</html>

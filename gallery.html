@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gallery</title>
+  <style>
+    @font-face {
+      font-family: 'MyFont';
+      src: url('Typewriter-Serial Regular.ttf');
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      margin: 0;
+      width: 100vw;
+      min-height: 100vh;
+      font-family: 'MyFont', 'Courier New', monospace;
+      overflow-x: hidden;
+      background: #e5e5e5;
+    }
+
+
+    #bg-img {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+      opacity: 0.45;
+      z-index: 0;
+    }
+
+    #cloud {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+      pointer-events: none;
+      opacity:0.2
+    }
+
+
+    #video-layer {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .vid {
+      position: absolute;
+      object-fit: cover;
+      opacity: 0.4;
+    }
+
+
+    .vid:nth-child(1)  { width:32vw; top: 4vh;  left: 2vw;  }
+    .vid:nth-child(2)  { width:22vw; top: 2vh;  left:38vw;  }
+    .vid:nth-child(3)  { width:28vw; top: 6vh;  left:66vw;  }
+    .vid:nth-child(4)  { width:18vw; top:36vh;  left: 6vw;  }
+    .vid:nth-child(5)  { width:38vw; top:32vh;  left:28vw;  }
+    .vid:nth-child(6)  { width:24vw; top:30vh;  left:72vw;  }
+    .vid:nth-child(7)  { width:26vw; top:62vh;  left: 2vw;  }
+    .vid:nth-child(8)  { width:30vw; top:70vh;  left:34vw;  }
+    .vid:nth-child(9)  { width:34vw; top:74vh;  left:70vw;  }
+
+
+    #card-layer {
+      position: relative;
+      z-index: 10;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12vh 0;
+      
+    }
+
+    .card {
+      background: rgba(245, 240, 230, 0.72);
+      width: 46vw;
+      padding: 7vh 5vw 6vh;
+      display: flex;
+      flex-direction: column;
+      gap: 3.5vh;
+    }
+
+    .card p {
+      font-size: clamp(12px, 1.1vw, 17px);
+      line-height: 2;
+      color: #1a1a1a;
+      letter-spacing: 0.03em;
+    }
+
+    .card .closing {
+      font-size: clamp(11px, 1vw, 15px);
+      color: #555;
+      line-height: 1.9;
+      padding-top: 1vh;
+      border-top: 1px solid rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+
+
+    #sketch-wrap {
+      margin-top: 3vh;
+      display: flex;
+      flex-direction: column;
+      gap: 1vh;
+      align-items: center;
+    }
+
+    #sketch-label {
+      font-size: clamp(9px, 0.8vw, 12px);
+      color: rgba(0,0,0,0.35);
+      letter-spacing: 0.12em;
+    }
+
+    #latest {
+      width: 100%;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+
+<img id="bg-img" src="view.png" alt="">
+ <img id="cloud"  src="cloud.gif" alt="">
+
+
+
+<div id="video-layer">
+  <video class="vid" src="video1.MOV" autoplay loop muted playsinline></video>
+  <video class="vid" src="video2.mov" autoplay loop muted playsinline></video>
+  <video class="vid" src="video3.MOV" autoplay loop muted playsinline></video>
+  <video class="vid" src="video4.mov" autoplay loop muted playsinline></video>
+  <video class="vid" src="video5.mov" autoplay loop muted playsinline></video>
+  <video class="vid" src="video6.mov" autoplay loop muted playsinline></video>
+  <video class="vid" src="video7.MOV" autoplay loop muted playsinline></video>
+  <video class="vid" src="video8.MOV" autoplay loop muted playsinline></video>
+  <video class="vid" src="video9.mov" autoplay loop muted playsinline></video>
+</div>
+
+
+<div id="card-layer">
+  <div class="card">
+
+    <p>
+      A new place,<br>
+      everything comes at once,<br>
+      and sometimes it is hard to find your footing.<br>
+      The hallways feel unfamiliar.<br>
+      The rooms all look the same.<br>
+      You open one door and find another.
+    </p>
+
+    <p>
+      It is alright to feel lost for a while.<br>
+      You are with your cabinet.<br>
+      There is always a way through <br>
+      even when you cannot see it yet.
+    </p>
+
+    <p>
+      And no matter how long the corridor,<br>
+      spring finds its way in through the window.<br>
+      It always does.
+    </p>
+
+    <p class="closing">
+      Thank you for your cabinet.<br>
+      You are in the spring now, too.
+    </p>
+
+    <div id="sketch-wrap"></div>
+
+  </div>
+</div>
+
+<script>
+  const STORAGE_KEY = 'drawings';
+
+  function render() {
+    let saved = [];
+    try { saved = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch(e) {}
+    if (saved.length === 0) return;
+
+    const latest = saved[saved.length - 1];
+
+    const wrap = document.getElementById('sketch-wrap');
+
+    const label = document.createElement('span');
+    label.id = 'sketch-label';
+    label.textContent = 'your cabinet';
+    wrap.appendChild(label);
+
+    const img = document.createElement('img');
+    img.id  = 'latest';
+    img.src = latest.img;
+    wrap.appendChild(img);
+  }
+
+  render();
+</script>
+
+</body>
+</html>

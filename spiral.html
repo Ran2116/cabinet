@@ -1,0 +1,904 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spiral</title>
+
+  <style>
+    @font-face {
+  font-family: 'MyFont';
+  src: url('Typewriter-Serial Regular.ttf');
+}
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      background: rgb(218, 217, 217);
+    }
+
+    body { cursor: default; }
+
+    #scroll-space { height: 1800vh; }
+
+    #viewport {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    #noise  { opacity: 0; }
+    #window { opacity: 0; }
+
+    #fence {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+      pointer-events: none;
+    }
+
+    #world {
+      position: absolute;
+      width: 300vw;
+      height: 300vh;
+      left: 0;
+      top: 0;
+      will-change: transform;
+      transform-origin: top left;
+      z-index: 10;
+    }
+
+    .cell {
+      position: absolute;
+      width: 100vw;
+      height: 100vh;
+      box-sizing: border-box;
+      opacity: 0.1;
+      background-image: url("noise.gif");
+    }
+
+    #c1 { left: 0vw;   top: 0vh;   }
+    #c2 { left: 100vw; top: 0vh;   }
+    #c3 { left: 200vw; top: 0vh;   }
+    #c4 { left: 0vw;   top: 100vh; }
+    #c5 { left: 100vw; top: 100vh; }
+    #c6 { left: 200vw; top: 100vh; }
+    #c7 { left: 0vw;   top: 200vh; }
+    #c8 { left: 100vw; top: 200vh; }
+    #c9 { left: 200vw; top: 200vh; }
+
+    /* hotspot */
+    .hotspot {
+      position: absolute;
+      display: block;
+      overflow: hidden;
+      cursor: pointer;
+      text-decoration: none;
+      z-index: 10;
+      transition: transform 0.22s ease, box-shadow 0.22s ease;
+    }
+
+    .hotspot:active { opacity: 0.85; }
+
+    /* window hotspot */
+    .hotspot.window-type {
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+
+    .photo-overlay {
+      position: absolute;
+      inset: 0;
+      background-image: url("view.png");
+      background-repeat: no-repeat;
+      background-size: 300vw 300vh;
+      opacity: 0;
+      transition: opacity 0.22s ease;
+      pointer-events: none;
+    }
+
+    .hotspot.window-type:hover .photo-overlay { opacity: 1; }
+
+   /* cabinet hotspot */
+    .hotspot.cabinet {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .cab-img {
+      position: absolute;
+      inset: 0;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      opacity: 0;
+      transition: opacity 0.22s ease;
+    }
+
+    .hotspot.cabinet:hover .cab-img { opacity: 1; }
+
+    .cab-label {
+      position: relative;
+      z-index: 2;
+      font-size: 18px;
+      font-family:'MyFont', serif;
+      color:#FCCDAF;
+      letter-spacing: 0.04em;
+      text-align: center;
+      pointer-events: none;
+      user-select: none;
+      transition: opacity 0.22s ease;
+      background: rgba(60, 55, 50, 0.62);
+      padding: 4px 10px 5px;
+      line-height: 1;
+      display: inline-block;
+      white-space: nowrap;
+      max-width: 90%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .hotspot.cabinet:hover .cab-label { opacity: 0; }
+
+ /* cabinet image */
+    .cab-narrow { width: 11.7vw;  aspect-ratio: 90  / 130; }
+    .cab-wide   { width: 35vw;    aspect-ratio: 270 / 130; }
+    .cab-tall   { width: 23.5vw;  aspect-ratio: 180 / 260; }
+
+   /* window image */
+    .win-tall   { width: 23.5vw;  aspect-ratio: 180 / 288; opacity:0.9; }
+    .win-sq     { width: 19.5vw;  aspect-ratio: 150 / 150; opacity:0.9;}
+
+   
+    .hs1  { left: 20vw;  top: 16vh; width:17vw;  }   /* win-tall  */
+    .hs2  { left: 55vw;  top: 3vh;   }   /* cab-narrow */
+    .hs3  { left: 26vw;  top: 75vh; width:15vw; }   /* win-sq    */
+
+
+    .hs4  { left: 148vw; top: 8vh; width:15vw; } /* win-sq */
+    .hs5  { left: 128vw; top: 14vh;  }   /* cab-narrow */
+    .hs6  { left: 138vw; top: 55vh;  }   /* win-sq    */
+
+
+    .hs7  { left: 158vw; top: 40vh;  }   /* cab-narrow */
+    .hs8  { left: 260vw; top: 14vh;  }   /* win-sq    */
+    .hs9  { left: 284vw; top: 114vh; }   /* cab-narrow */
+
+
+    .hs10 { left: 5vw;   top: 115vh; }   /* win-sq    */
+    .hs11 { left: 38vw;  top: 122vh; }   /* cab-narrow */
+    .hs12 { left: 10vw;  top: 162vh; }   /* win-sq    */
+
+    
+    .hs13 { left: 148vw; top: 108vh; }   /* win-sq    */
+    .hs14 { left: 148vw; top: 166vh; width:15vw }   /* cab-wide  */
+    .hs15 { left: 116vw; top: 155vh; }   /* win-tall  */
+
+   
+    .hs16 { left: 230vw; top: 108vh;width:15vw; }   /* cab-wide  */
+    .hs17 { left: 254vw; top: 114vh; width:15vw; }   /* win-sq    */
+    .hs18 { left: 234vw; top: 158vh; }   /* win-sq    */
+
+    
+    .hs19 { left: 5vw;   top: 208vh; width:15vw; }   /* win-sq    */
+    .hs20 { left: 40vw;  top: 220vh; }   /* cab-wide  */
+    .hs21 { left: 10vw;  top: 262vh; }   /* win-sq    */
+
+    
+    .hs22 { left: 108vw; top: 230vh; width:30vw; }   /* cab-wide  */
+    .hs23 { left: 240vw; top: 214vh; width:20vw; }   /* win-sq    */
+    .hs24 { left: 120vw; top: 260vh; }   /* cab-wide  */
+
+   
+    .hs25 { left: 208vw; top: 206vh; }   /* win-sq    */
+    .hs26 { left: 275vw; top: 250vh; width:20vw; }   /* cab-wide  */
+    .hs27 { left: 230vw; top: 263vh; width:15vw; }   /* win-sq    */
+
+    
+    .hs28 { left: 2vw;   top: 3vh; width:14vw;   }   /* win-tall  */
+    .hs29 { left: 38vw;  top: 4vh; width:16vw;   }   /* cab-tall  */
+    .hs30 { left: 70vw;  top: 8vh;  }   /* win-sq    */
+    .hs31 { left: 62vw;  top: 50vh;  }   /* cab-tall  */
+    .hs32 { left: 2vw;   top: 72vh;  }   /* win-sq    */
+    .hs33 { left: 50vw;  top: 60vh;  }   /* win-sq    */
+
+    .hs34 { left: 88vw;  top: 12vh;  }   /* cab-tall  */
+    .hs35 { left: 78vw;  top: 68vh;  }   /* win-sq    */
+    .hs36 { left: 102vw; top: 2vh;   }   /* win-sq    */
+    .hs37 { left: 108vw; top: 45vh; width:18vw;  }   /* cab-tall  */
+    .hs38 { left: 172vw; top: 4vh;   }   /* win-sq    */
+    .hs39 { left: 170vw; top: 68vh;  }   /* win-sq    */
+
+    .hs40 { left: 240vw; top: 55vh; width:20vw;  }   /* cab-tall  */
+    .hs41 { left: 206vw; top: 50vh; width:15vw;  }   /* win-tall  */
+    .hs42 { left: 204vw; top: 2vh;   }   /* win-sq    */
+    .hs43 { left: 228vw; top: 4vh;   }   /* cab-tall  */
+    .hs44 { left: 284vw; top: 2vh; width:30vw;  }   /* win-sq    */
+    .hs45 { left: 268vw; top: 72vh;  }   /* win-sq    */
+
+    .hs46 { left: 40vw;   top: 150vh; }   /* cab-tall  */
+    .hs47 { left: 62vw;  top: 108vh; }   /* win-sq    */
+    .hs48 { left: 70vw;  top: 155vh; }   /* win-sq    */
+    .hs49 { left: 88vw;  top: 118vh; }   /* cab-narrow */
+
+    .hs50 { left: 102vw; top: 100vh; }   /* win-sq    */
+    .hs51 { left: 170vw; top: 144vh; }   /* win-sq    */
+    .hs52 { left: 188vw; top: 112vh; }   /* win-sq    */
+
+    .hs53 { left: 204vw; top: 102vh; }   /* cab-tall  */
+    .hs54 { left: 274vw; top: 152vh; }   /* win-sq    */
+
+    .hs55 { left: 25vw;   top: 220vh; width:10vw; }   /* cab-narrow */
+    .hs56 { left: 80vw;  top: 206vh; width:15vw; }   /* win-sq    */
+    .hs57 { left: 80vw;  top: 250vh; }   /* win-sq    */
+    .hs58 { left: 50vw;  top: 260vh; }   /* cab-narrow */
+
+    .hs59 { left: 100vw; top: 200vh; }   /* cab-narrow */
+    .hs60 { left: 155vw; top: 200vh; width:25vw; }   /* win-sq    */
+    .hs61 { left: 188vw; top: 255vh; width:20vw; }   /* win-sq    */
+    .hs62 { left: 162vw; top: 260vh; width:10vw; }   /* win-sq    */
+
+    .hs63 { left: 212vw; top: 240vh; width:15vw; }   /* cab-wide  */
+    .hs64 { left: 274vw; top: 206vh; }   /* win-sq    */
+    .hs65 { left: 264vw; top: 274vh; }   /* win-sq    */
+
+    .hs2 .cab-label {
+  font-size: 30px;
+  color: #F8E884;
+}
+
+.hs11 .cab-label {
+  font-size: 30px;
+  color: #F8E884;
+}
+
+.hs58 .cab-label {
+  font-size: 30px;
+  color: #F8E884;
+}
+
+.hs24 .cab-label {
+  font-size: 30px;
+  color: #F8E884;
+}
+
+
+.hs16 .cab-label {
+  font-size: 30px;
+  color: #F8E884;
+}
+
+.hs14 .cab-label {
+  font-size: 30px;
+  color: #F8E884;
+}
+
+.hs18 .cab-label {
+  color: #BADFEB;
+}
+
+
+.hs20 .cab-label {
+  color: #BADFEB;
+}
+
+
+.hs9 .cab-label {
+  color: #BADFEB;
+}
+
+.hs43 .cab-label {
+  color: #BADFEB;
+}
+
+.hs37 .cab-label {
+  color: #BADFEB;
+}
+
+.hs62 .cab-label {
+  color: #BADFEB;
+}
+
+
+
+
+
+
+
+  </style>
+</head>
+<body>
+
+  <img id="window" src="window.png" alt="">
+  <img id="noise"  src="noise.gif"  alt="">
+  <img id="fence"  src="fence2.png" alt="">
+
+  <div id="scroll-space"></div>
+
+  <div id="viewport">
+    <div id="world">
+
+
+      <section class="cell" id="c1"></section>
+      <section class="cell" id="c2"></section>
+      <section class="cell" id="c3"></section>
+      <section class="cell" id="c4"></section>
+      <section class="cell" id="c5"></section>
+      <section class="cell" id="c6"></section>
+      <section class="cell" id="c7"></section>
+      <section class="cell" id="c8"></section>
+      <section class="cell" id="c9"></section>
+
+   
+
+
+      <div class="hotspot window-type win-tall hs1"
+           style="background-image:url('window1.png');"
+           data-target-index="5">
+        <div class="photo-overlay" style="background-position:-10vw -18vh;"></div>
+        <div class="tag">hs1</div>
+      </div>
+
+    
+      <a class="hotspot cabinet cab-narrow hs2" href="chaos.html" >
+        <div class="cab-img" style="background-image:url('cabinet1.png');"></div>
+        <span class="cab-label">cabinet</span>
+        <div class="tag">hs2</div>
+      </a>
+
+
+      <div class="hotspot window-type win-sq hs3"
+           style="background-image:url('window2.png');"
+           data-target-index="2" >
+        <div class="photo-overlay" style="background-position:-22vw -54vh;"></div>
+        <div class="tag">hs3</div>
+      </div>
+
+      
+      <div class="hotspot window-type win-sq hs4"
+           style="background-image:url('window3.png');"
+           data-target-index="8" >
+        <div class="photo-overlay" style="background-position:-154vw -52vh;"></div>
+        <div class="tag">hs4</div>
+      </div>
+
+
+      <a class="hotspot cabinet cab-narrow hs5" href="white5.html">
+        <div class="cab-img" style="background-image:url('cabinet2.png');"></div>
+        <span class="cab-label">cabinet</span>
+        <div class="tag">hs5</div>
+      </a>
+
+
+      <div class="hotspot window-type win-sq hs6"
+           style="background-image:url('window4.png');"
+           data-target-index="6">
+        <div class="photo-overlay" style="background-position:-132vw -124vh;"></div>
+        <div class="tag">hs6</div>
+      </div>
+
+      
+      <a class="hotspot cabinet cab-narrow hs7" href="white5.html" >
+        <div class="cab-img" style="background-image:url('cabinet3.png');"></div>
+        <span class="cab-label">cabinet</span>
+        <div class="tag">hs7</div>
+      </a>
+
+    
+      <div class="hotspot window-type win-sq hs8"
+           style="background-image:url('window5.png');"
+           data-target-index="4">
+        <div class="photo-overlay" style="background-position:-244vw -22vh;"></div>
+        <div class="tag">hs8</div>
+      </div>
+
+
+      <a class="hotspot cabinet cab-narrow hs9" href="chaos_blue.html">
+        <div class="cab-img" style="background-image:url('cabinet4.png');"></div>
+        <span class="cab-label">cabinet</span>
+        <div class="tag">hs9</div>
+      </a>
+
+    
+      <div class="hotspot window-type win-sq hs10"
+           style="background-image:url('window6.png');"
+           data-target-index="1" >
+        <div class="photo-overlay" style="background-position:-12vw -116vh;"></div>
+        <div class="tag">hs10</div>
+      </div>
+
+   
+      <a class="hotspot cabinet cab-narrow hs11" href="paper.html" >
+        <div class="cab-img" style="background-image:url('cabinet5.png');"></div>
+        <span class="cab-label">cabinet</span>
+        <div class="tag">hs11</div>
+      </a>
+
+  
+      <div class="hotspot window-type win-sq hs12"
+           style="background-image:url('window7.png');"
+           data-target-index="8" >
+        <div class="photo-overlay" style="background-position:-18vw -154vh;"></div>
+        <div class="tag">hs12</div>
+      </div>
+
+     
+      <div class="hotspot window-type win-sq hs13"
+           style="background-image:url('window8.png');"
+           data-target-index="0" >
+        <div class="photo-overlay" style="background-position:-114vw -112vh;"></div>
+        <div class="tag">hs13</div>
+      </div>
+
+      
+      <a class="hotspot cabinet cab-wide hs14" href="gallery.html" >
+        <div class="cab-img" style="background-image:url('cabinet8.png');"></div>
+        <span class="cab-label">cabinet</span>
+        <div class="tag">hs14</div>
+      </a>
+
+ 
+      <div class="hotspot window-type win-tall hs15"
+           style="background-image:url('window1.png');"
+           data-target-index="10" >
+        <div class="photo-overlay" style="background-position:-126vw -148vh;"></div>
+        <div class="tag">hs15</div>
+      </div>
+
+      <a class="hotspot cabinet cab-tall hs16" href="draw.html" >
+        <div class="cab-img" style="background-image:url('cabinet15.png');"></div>
+        <span class="cab-label">cabinet</span>
+        <div class="tag">hs16</div>
+      </a>
+
+
+      <div class="hotspot window-type win-sq hs17"
+           style="background-image:url('window2.png');"
+           data-target-index="11">
+        <div class="photo-overlay" style="background-position:-246vw -118vh;"></div>
+        <div class="tag">hs17</div>
+      </div>
+
+ 
+      <div class="hotspot window-type win-sq hs18"
+           style="background-image:url('window3.png');"
+           data-target-index="3">
+        <div class="photo-overlay" style="background-position:-222vw -150vh;"></div>
+        <div class="tag">hs18</div>
+      </div>
+
+  
+      <div class="hotspot window-type win-sq hs19"
+           style="background-image:url('window4.png');"
+           data-target-index="15" >
+        <div class="photo-overlay" style="background-position:-10vw -212vh;"></div>
+        <div class="tag">hs19</div>
+      </div>
+
+      
+      <a class="hotspot cabinet cab-wide hs20" href="chaos_blue.html">
+        <div class="cab-img" style="background-image:url('cabinet8.png');"></div>
+        <span class="cab-label">cabinet</span>
+        <div class="tag">hs20</div>
+      </a>
+
+      <div class="hotspot window-type win-sq hs21"
+           style="background-image:url('window5.png');"
+           data-target-index="4" >
+        <div class="photo-overlay" style="background-position:-18vw -252vh;"></div>
+        <div class="tag">hs21</div>
+      </div>
+
+ 
+      <a class="hotspot cabinet cab-wide hs22" href="white3.html">
+        <div class="cab-img" style="background-image:url('cabinet9.png');"></div>
+        <span class="cab-label">cabinet</span>
+        <div class="tag">hs22</div>
+      </a>
+
+
+      <div class="hotspot window-type win-sq hs23"
+           style="background-image:url('window6.png');"
+           data-target-index="5">
+        <div class="photo-overlay" style="background-position:-144vw -216vh;"></div>
+        <div class="tag">hs23</div>
+      </div>
+
+      
+      <a class="hotspot cabinet cab-wide hs24" href="type.html">
+        <div class="cab-img" style="background-image:url('cabinet10.png');"></div>
+        <span class="cab-label">cabinet</span>
+        <div class="tag">hs24</div>
+      </a>
+
+     
+      <div class="hotspot window-type win-sq hs25"
+           style="background-image:url('window7.png');"
+           data-target-index="9" >
+        <div class="photo-overlay" style="background-position:-214vw -210vh;"></div>
+        <div class="tag">hs25</div>
+      </div>
+
+     
+      <a class="hotspot cabinet cab-wide hs26" href="white4.html" >
+        <div class="cab-img" style="background-image:url('cabinet11.png');"></div>
+        <span class="cab-label">cabinet</span>
+        <div class="tag">hs26</div>
+      </a>
+
+    
+      <div class="hotspot window-type win-sq hs27"
+           style="background-image:url('window8.png');"
+           data-target-index="0" >
+        <div class="photo-overlay" style="background-position:-222vw -248vh;"></div>
+        <div class="tag">hs27</div>
+      </div>
+
+    
+ 
+      <div class="hotspot window-type win-tall hs28"
+           style="background-image:url('window1.png');"
+           data-target-index="1" >
+        <div class="photo-overlay" style="background-position:-6vw -6vh;"></div>
+        <div class="tag">hs28</div>
+      </div>
+
+   
+      <a class="hotspot cabinet cab-tall hs29" href="white1.html">
+        <div class="cab-img" style="background-image:url('cabinet12.png');"></div>
+        <span class="cab-label">cabinet</span>
+        <div class="tag">hs29</div>
+      </a>
+
+ 
+      <div class="hotspot window-type win-sq hs30"
+           style="background-image:url('window2.png');"
+           data-target-index="7">
+        <div class="photo-overlay" style="background-position:-82vw -74vh;"></div>
+        <div class="tag">hs30</div>
+      </div>
+
+ 
+      <a class="hotspot cabinet cab-tall hs31" href="white1.html">
+        <div class="cab-img" style="background-image:url('cabinet13.png');"></div>
+        <span class="cab-label">cabinet</span>
+        <div class="tag">hs31</div>
+      </a>
+
+
+      <div class="hotspot window-type win-sq hs32"
+           style="background-image:url('window3.png');"
+           data-target-index="6" >
+        <div class="photo-overlay" style="background-position:-76vw -34vh;"></div>
+        <div class="tag">hs32</div>
+      </div>
+
+
+      <div class="hotspot window-type win-sq hs33"
+           style="background-image:url('window4.png');"
+           data-target-index="8">
+        <div class="photo-overlay" style="background-position:-132vw -82vh;"></div>
+        <div class="tag">hs33</div>
+      </div>
+
+    
+      <a class="hotspot cabinet cab-tall hs34" href="white1.html">
+        <div class="cab-img" style="background-image:url('cabinet14.png');"></div>
+        <span class="cab-label">cabinet</span>
+        <div class="tag">hs34</div>
+      </a>
+
+
+      <div class="hotspot window-type win-sq hs35"
+           style="background-image:url('window5.png');"
+           data-target-index="5">
+        <div class="photo-overlay" style="background-position:-236vw -42vh;"></div>
+        <div class="tag">hs35</div>
+      </div>
+
+
+      <div class="hotspot window-type win-sq hs36"
+           style="background-image:url('window6.png');"
+           data-target-index="7">
+        <div class="photo-overlay" style="background-position:-252vw -126vh;"></div>
+        <div class="tag">hs36</div>
+      </div>
+
+  
+      <a class="hotspot cabinet cab-tall hs37" href="chaos_blue.html">
+        <div class="cab-img" style="background-image:url('cabinet15.png');"></div>
+        <span class="cab-label">cabinet</span>
+        <div class="tag">hs37</div>
+      </a>
+
+
+      <div class="hotspot window-type win-sq hs38"
+           style="background-image:url('window7.png');"
+           data-target-index="8">
+        <div class="photo-overlay" style="background-position:-74vw -138vh;"></div>
+        <div class="tag">hs38</div>
+      </div>
+
+
+      <div class="hotspot window-type win-sq hs39"
+           style="background-image:url('window8.png');"
+           data-target-index="2">
+        <div class="photo-overlay" style="background-position:-82vw -182vh;"></div>
+        <div class="tag">hs39</div>
+      </div>
+
+
+      <a class="hotspot cabinet cab-tall hs40" href="white5.html">
+        <div class="cab-img" style="background-image:url('cabinet16.png');"></div>
+        <span class="cab-label">cabinet</span>
+        <div class="tag">hs40</div>
+      </a>
+
+
+      <div class="hotspot window-type win-tall hs41"
+           style="background-image:url('window1.png');"
+           data-target-index="3">
+        <div class="photo-overlay" style="background-position:-184vw -116vh;"></div>
+        <div class="tag">hs41</div>
+      </div>
+
+
+      <div class="hotspot window-type win-sq hs42"
+           style="background-image:url('window2.png');"
+           data-target-index="5">
+        <div class="photo-overlay" style="background-position:-144vw -186vh;"></div>
+        <div class="tag">hs42</div>
+      </div>
+
+
+      <a class="hotspot cabinet cab-tall hs43" href="chaos_blue.html">
+        <div class="cab-img" style="background-image:url('cabinet17.png');"></div>
+        <span class="cab-label">cabinet</span>
+        <div class="tag">hs43</div>
+      </a>
+
+
+      <div class="hotspot window-type win-sq hs44"
+           style="background-image:url('window3.png');"
+           data-target-index="4">
+        <div class="photo-overlay" style="background-position:-278vw -128vh;"></div>
+        <div class="tag">hs44</div>
+      </div>
+
+ 
+      <div class="hotspot window-type win-sq hs45"
+           style="background-image:url('window4.png');"
+           data-target-index="8">
+        <div class="photo-overlay" style="background-position:-238vw -182vh;"></div>
+        <div class="tag">hs45</div>
+      </div>
+
+     
+      <a class="hotspot cabinet cab-tall hs46" href="white2.html">
+        <div class="cab-img" style="background-image:url('cabinet18.png');"></div>
+        <span class="cab-label">caninet</span>
+        <div class="tag">hs46</div>
+      </a>
+
+
+      <div class="hotspot window-type win-sq hs47"
+           style="background-image:url('window5.png');"
+           data-target-index="1" >
+        <div class="photo-overlay" style="background-position:-72vw -228vh;"></div>
+        <div class="tag">hs47</div>
+      </div>
+
+   
+      <div class="hotspot window-type win-sq hs48"
+           style="background-image:url('window6.png');"
+           data-target-index="3">
+        <div class="photo-overlay" style="background-position:-86vw -254vh;"></div>
+        <div class="tag">hs48</div>
+      </div>
+
+     
+      <a class="hotspot cabinet cab-narrow hs49" href="white2.html" >
+        <div class="cab-img" style="background-image:url('cabinet1.png');"></div>
+        <span class="cab-label">cabinet</span>
+        <div class="tag">hs49</div>
+      </a>
+
+     
+      <div class="hotspot window-type win-sq hs50"
+           style="background-image:url('window7.png');"
+           data-target-index="4">
+        <div class="photo-overlay" style="background-position:-184vw -228vh;"></div>
+        <div class="tag">hs50</div>
+      </div>
+
+
+      <div class="hotspot window-type win-sq hs51"
+           style="background-image:url('window8.png');"
+           data-target-index="2" >
+        <div class="photo-overlay" style="background-position:-146vw -254vh;"></div>
+        <div class="tag">hs51</div>
+      </div>
+
+     
+      <a class="hotspot cabinet cab-narrow hs52" href="white6.html" >
+        <div class="cab-img" style="background-image:url('cabinet2.png');"></div>
+        <span class="cab-label">cabinet</span>
+        <div class="tag">hs52</div>
+      </a>
+
+   
+      <div class="hotspot window-type win-tall hs53"
+           style="background-image:url('window1.png');"
+           data-target-index="5">
+        <div class="photo-overlay" style="background-position:-246vw -226vh;"></div>
+        <div class="tag">hs53</div>
+      </div>
+
+  
+      <div class="hotspot window-type win-sq hs54"
+           style="background-image:url('window2.png');"
+           data-target-index="3">
+        <div class="photo-overlay" style="background-position:-236vw -254vh;"></div>
+        <div class="tag">hs54</div>
+      </div>
+
+      
+      <a class="hotspot cabinet cab-narrow hs55" href="white2.html">
+        <div class="cab-img" style="background-image:url('cabinet3.png');"></div>
+        <span class="cab-label">cabinet</span>
+        <div class="tag">hs55</div>
+      </a>
+
+     
+      <div class="hotspot window-type win-sq hs56"
+           style="background-image:url('window3.png');"
+           data-target-index="1">
+        <div class="photo-overlay" style="background-position:-62vw -206vh;"></div>
+        <div class="tag">hs56</div>
+      </div>
+
+
+      <div class="hotspot window-type win-sq hs57"
+           style="background-image:url('window4.png');"
+           data-target-index="3">
+        <div class="photo-overlay" style="background-position:-92vw -236vh;"></div>
+        <div class="tag">hs57</div>
+      </div>
+
+     
+      <a class="hotspot cabinet cab-narrow hs58" href="flip.html">
+        <div class="cab-img" style="background-image:url('cabinet4.png');"></div>
+        <span class="cab-label">cabinet</span>
+        <div class="tag">hs58</div>
+      </a>
+
+
+      <a class="hotspot cabinet cab-narrow hs59" href="white3.html">
+        <div class="cab-img" style="background-image:url('cabinet5.png');"></div>
+        <span class="cab-label">cabinet</span>
+        <div class="tag">hs59</div>
+      </a>
+
+
+      <div class="hotspot window-type win-sq hs60"
+           style="background-image:url('window5.png');"
+           data-target-index="4">
+        <div class="photo-overlay" style="background-position:-174vw -206vh;"></div>
+        <div class="tag">hs60</div>
+      </div>
+
+      <div class="hotspot window-type win-sq hs61"
+           style="background-image:url('window6.png');"
+           data-target-index="5">
+        <div class="photo-overlay" style="background-position:-194vw -236vh;"></div>
+        <div class="tag">hs61</div>
+      </div>
+
+     
+      <a class="hotspot cabinet cab-narrow hs62" href="chaos_blue.html">
+        <div class="cab-img" style="background-image:url('cabinet6.png');"></div>
+        <span class="cab-label">cabinet</span>
+        <div class="tag">hs62</div>
+      </a>
+
+
+      <a class="hotspot cabinet cab-narrow hs63" href="white4.html">
+        <div class="cab-img" style="background-image:url('cabinet1.png');"></div>
+        <span class="cab-label">cabinet</span>
+        <div class="tag">hs63</div>
+      </a>
+
+   
+      <div class="hotspot window-type win-sq hs64"
+           style="background-image:url('window7.png');"
+           data-target-index="5">
+        <div class="photo-overlay" style="background-position:-274vw -206vh;"></div>
+        <div class="tag">hs64</div>
+      </div>
+
+
+      <div class="hotspot window-type win-sq hs65"
+           style="background-image:url('window8.png');"
+           data-target-index="3" >
+        <div class="photo-overlay" style="background-position:-270vw -242vh;"></div>
+        <div class="tag">hs65</div>
+      </div>
+
+    </div>
+  </div>
+
+
+  <script>
+    const world    = document.getElementById("world");
+    const hudText  = document.getElementById("hud-text");
+    const hotspots = document.querySelectorAll(".hotspot");
+
+    const path = [
+      { x:   0, y:   0 },   // 0 · pos 1
+      { x:   0, y: 100 },   // 1 · pos 4
+      { x:   0, y: 200 },   // 2 · pos 7
+      { x: 100, y: 200 },   // 3 · pos 8
+      { x: 200, y: 200 },   // 4 · pos 9
+      { x: 200, y: 100 },   // 5 · pos 6
+      { x: 200, y:   0 },   // 6 · pos 3
+      { x: 100, y:   0 },   // 7 · pos 2
+      { x: 100, y: 100 }    // 8 · pos 5 (center)
+    ];
+
+    function lerp(a, b, t) { return a + (b - a) * t; }
+    function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+    function getScrollProgress() {
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      return maxScroll <= 0 ? 0 : window.scrollY / maxScroll;
+    }
+
+    function renderFromProgress(progress) {
+      progress = clamp(progress, 0, 1);
+      const segCount = path.length - 1;
+      const scaled   = progress * segCount;
+      const index    = Math.min(Math.floor(scaled), segCount - 1);
+      const t        = scaled - index;
+      const x = lerp(path[index].x, path[index + 1].x, t);
+      const y = lerp(path[index].y, path[index + 1].y, t);
+      world.style.transform = `translate(${-x}vw, ${-y}vh)`;
+    }
+
+    function scrollToPathIndex(index) {
+      index = clamp(index, 0, path.length - 1);
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      window.scrollTo({ top: (index / (path.length - 1)) * maxScroll, behavior: "smooth" });
+    }
+
+    hotspots.forEach(hs => {
+      hs.addEventListener("click", e => {
+        if (hudText) hudText.textContent = `Clicked: ${hs.dataset.label || "navigation"}`;
+        if (hs.dataset.targetIndex !== undefined) {
+          e.preventDefault();
+          scrollToPathIndex(Number(hs.dataset.targetIndex));
+        }
+      });
+    });
+
+    window.addEventListener("scroll", () => renderFromProgress(getScrollProgress()));
+    window.addEventListener("resize", () => renderFromProgress(getScrollProgress()));
+    renderFromProgress(getScrollProgress());
+
+    
+     (function () {
+      var idx = sessionStorage.getItem('gotoPathIndex');
+      if (idx !== null) {
+        sessionStorage.removeItem('gotoPathIndex');
+        var maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+        window.scrollTo({ top: (Number(idx) / 8) * maxScroll, behavior: 'instant' });
+      }
+    })();
+
+  </script>
+</body>
+</html>

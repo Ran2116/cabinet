@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cabinet</title>
+  <style>
+    @font-face {
+      font-family: 'MyFont';
+      src: url('Typewriter-Serial Regular.ttf');
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #ffffff;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2vh;
+      font-family: 'MyFont', 'Courier New', monospace;
+      position: relative;
+    }
+
+    .cab-img {
+      position: fixed;
+      width: 11.7vw;
+      aspect-ratio: 90 / 130;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      pointer-events: none;
+      z-index: 3;
+      opacity: 0;
+      animation: fadeIn 0.3s ease forwards;
+    }
+
+     #fence {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+      pointer-events: none;
+      opacity: 0.3;
+      z-index: 1;
+    }
+
+    #noise {
+      position: fixed;
+      inset: 0;
+      background-image: url('noise.gif');
+      background-repeat: repeat;
+      background-size: auto;
+      opacity: 0.2;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    #instruction {
+      font-size: 15px;
+      color:  rgba(0, 0, 0, 1);
+      letter-spacing: 0.1em;
+      z-index: 10;
+    }
+
+    #input {
+      font-family: 'MyFont', monospace;
+      font-size: clamp(13px, 1.2vw, 18px);
+      letter-spacing: 0.08em;
+      border: none;
+      border-bottom: 1px solid #000000;
+      outline: none;
+      padding: 6px 2px;
+      width: 20vw;
+      text-align: center;
+      background: transparent;
+      color: #000000;
+      z-index: 10;
+    }
+
+    #submit {
+      font-family: 'MyFont', monospace;
+      font-size: clamp(11px, 1vw, 15px);
+      letter-spacing: 0.12em;
+      color: transparent;
+      background: transparent;
+      border: none;
+      cursor: default;
+      padding: 6px 14px;
+      z-index: 10;
+      transition: background 0.3s, color 0.3s;
+      pointer-events: none;
+    }
+
+    #submit.unlocked {
+  background: rgba(0, 0, 0, 0.62);
+  color: #F8E884;
+  cursor: pointer;
+  pointer-events: auto;
+    }
+  </style>
+</head>
+<body>
+
+<img id="fence" src="fence2.png" alt="">
+<div id="noise"></div>
+
+<p id="instruction">please keep typing cabinet</p>
+<input id="input" type="text" autocomplete="off" spellcheck="false" />
+<button id="submit">cabinet</button>
+
+<script>
+  const RETURN_INDEX = 5;   // path index 5 = cell 6
+  const TARGET       = 'cabinet';
+  const MAX_CABS     = 8;
+
+  let count = 0;
+  const input  = document.getElementById('input');
+  const submit = document.getElementById('submit');
+
+  function spawnCabinet() {
+    const el = document.createElement('div');
+    el.className = 'cab-img';
+
+    const left = 2 + Math.random() * 82;
+    const top  = 2 + Math.random() * 84;
+
+    el.style.left = `${left}vw`;
+    el.style.top  = `${top}vh`;
+    el.style.backgroundImage = `url('cabinet3.png')`;
+
+    const rot = (Math.random() - 0.5) * 16;
+    el.style.transform = `rotate(${rot}deg)`;
+
+    document.body.appendChild(el);
+    count++;
+
+    if (count >= MAX_CABS) {
+      submit.classList.add('unlocked');
+    }
+  }
+
+  input.addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+
+    const val = input.value.trim().toLowerCase();
+    input.value = '';
+
+    if (val === TARGET && count < MAX_CABS) {
+      spawnCabinet();
+    }
+  });
+
+  submit.addEventListener('click', () => {
+    if (!submit.classList.contains('unlocked')) return;
+    sessionStorage.setItem('gotoPathIndex', String(RETURN_INDEX));
+    window.location.href = 'spiral.html';
+  });
+</script>
+
+</body>
+</html>

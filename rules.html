@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rules</title>
+  <style>
+    @font-face {
+      font-family: 'MyFont';
+      src: url('Typewriter-Serial Regular.ttf');
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background:rgb(218, 217, 217);
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'MyFont', 'Courier New', monospace;
+    }
+
+     #fence {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+      pointer-events: none;
+      opacity: 0.3;
+      z-index: 1;
+    }
+
+    #noise {
+      position: fixed;
+      inset: 0;
+      background-image: url('noise.gif');
+      background-repeat: repeat;
+      background-size: auto;
+      opacity: 0.2;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .card {
+      background: rgba(0, 0, 0, 0.356);
+      width: 56vw;
+      padding: 6vh 5vw;
+      display: flex;
+      flex-direction: column;
+      gap: 4.5vh;
+      z-index:3;
+    }
+
+    .rule {
+      font-size: 20px;
+      color: #000000;
+      line-height: 1.6;
+      display: flex;
+      gap: 1.2em;
+      z-index:3;
+    }
+
+    .rule-num {
+      flex-shrink: 0;
+      color: #000000;
+      z-index:3;
+    }
+
+    .cab-yellow { color: #F8E884; }
+    .cab-blue   { color: #BADFEB; }
+
+    .enter {
+      margin-top: 2vh;
+      align-self: flex-end;
+      font-family: 'MyFont', monospace;
+      font-size:16px;
+      color: rgba(255,255,255,0.45);
+      background: none;
+      border: none;
+      cursor: pointer;
+      letter-spacing: 0.12em;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .enter:hover { color: rgba(255,255,255,0.9); }
+  </style>
+</head>
+<body>
+
+<img id="fence" src="fence2.png" alt="">
+<div id="noise"></div>
+
+<div class="card">
+  <div class="rule">
+    <span class="rule-num">1</span>
+    <span>Please scroll and follow the <span class="cab-yellow">cabinet</span></span>
+  </div>
+  <div class="rule">
+    <span class="rule-num">2</span>
+    <span>Please do not hit the windows. Treat them Gently.</span>
+  </div>
+  <div class="rule">
+    <span class="rule-num">3</span>
+    <span>If you feel any discomfort or get lost, find the nearest <span class="cab-blue">cabinet</span></span>
+  </div>
+  <a class="enter" href="spiral.html">enter →</a>
+</div>
+
+</body>
+</html>
